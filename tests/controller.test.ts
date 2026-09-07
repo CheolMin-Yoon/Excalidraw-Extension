@@ -42,6 +42,47 @@ function makeFixture(render: ControllerDependencies["render"] = vi.fn().mockReso
 }
 
 describe("LatexConversionController", () => {
+  it("ignores a stale render failure after the user changes the source", async () => {
+    let rejectRender!: (reason: Error) => void;
+    const { controller, editor, dependencies } = makeFixture(() => new Promise((_resolve, reject) => { rejectRender = reject; }));
+    editor.value = "$$x^2$$";
+    editor.dispatchEvent(new FocusEvent("blur"));
+    editor.value = "corrected text";
+    editor.dispatchEvent(new InputEvent("input", { bubbles: true }));
+    rejectRender(new Error("Old formula failed"));
+    await flushPromises();
+    expect(dependencies.notifyError).not.toHaveBeenCalled();
+    expect(dependencies.clear).not.toHaveBeenCalled();
+    controller.stop();
+  });
+
+  it("can retry the same formula after a renderer connection failure", async () => {
+    const render = vi.fn().mockRejectedValueOnce(new Error("Host offline")).mockResolvedValueOnce(rendered);
+    const { controller, editor, dependencies } = makeFixture(render);
+    editor.value = "$$x^2$$";
+    editor.dispatchEvent(new FocusEvent("blur"));
+    await flushPromises();
+    expect(editor.value).toBe("$$x^2$$");
+    editor.dispatchEvent(new FocusEvent("blur"));
+    await flushPromises();
+    expect(render).toHaveBeenCalledTimes(2);
+    expect(dependencies.paste).toHaveBeenCalledOnce();
+    controller.stop();
+  });
+
+  it("does not paste twice when blur repeats during a slow native render", async () => {
+    let resolveRender!: (result: RenderedLatex) => void;
+    const { controller, editor, dependencies } = makeFixture(() => new Promise(resolve => { resolveRender = resolve; }));
+    editor.value = "$$x^2$$";
+    editor.dispatchEvent(new FocusEvent("blur"));
+    editor.dispatchEvent(new FocusEvent("blur"));
+    resolveRender(rendered);
+    await flushPromises();
+    expect(dependencies.clear).toHaveBeenCalledOnce();
+    expect(dependencies.paste).toHaveBeenCalledOnce();
+    controller.stop();
+  });
+
   it("warms on input, clears once, and pastes once on blur", async () => {
     const { controller, dependencies, editor } = makeFixture();
     const submit = vi.fn();

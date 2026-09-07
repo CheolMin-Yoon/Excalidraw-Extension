@@ -35,8 +35,11 @@ describe("renderLatexToSvg", () => {
       latex,
     });
     expect(rendered.svg).not.toMatch(/<canvas|data:image|background:\s*(?:#fff|white)/iu);
+    expect(rendered.svg).not.toMatch(/(?:background|vertical-align)\s*:/iu);
     expect(rendered.svg).not.toMatch(/(?:href|src)=["'](?:https?:|\/\/|data:)/iu);
     expect(rendered.svg).not.toContain("currentColor");
+    expect(svg.querySelector("use")).toBeNull();
+    expect(svg.getAttribute("preserveAspectRatio")).toBe("xMidYMid meet");
   });
 
   it("rejects invalid TeX instead of producing an error image", async () => {

@@ -4,7 +4,7 @@
 
 - 흰색 배경 없음
 - 확대해도 깨지지 않는 SVG 출력
-- 외부 서버나 원격 코드 없이 브라우저 안에서만 렌더링
+- 기본 모드는 브라우저 안에서 렌더링, 설치 글꼴 모드는 PC의 XeLaTeX로 렌더링
 - 향후 재편집 기능을 위한 LaTeX 원문 메타데이터 포함
 
 ## 사용법
@@ -26,6 +26,70 @@ $$
 ```
 
 잘못된 LaTeX는 이미지로 바꾸지 않으며 원문을 그대로 보존합니다. 일반 문장 속의 `$$...$$`, 빈 수식, 여러 수식 블록은 v1에서 자동 변환하지 않습니다.
+
+## 글꼴 선택 (0.2.0)
+
+확장 아이콘을 누르면 글꼴 선택창이 열립니다. 프리셋을 선택하고 **미리보기 → 저장**을 누르세요. 다음에 입력하는 수식부터 적용되며 기존 SVG 이미지는 바뀌지 않습니다.
+
+| 선택 | 영문·숫자·텍스트 | 그리스 문자·수식 기호 |
+| --- | --- | --- |
+| 기본 | MathJax New Computer Modern | MathJax New Computer Modern |
+| Times New Roman | 설치된 Times New Roman | Cambria Math |
+| Arial | 설치된 Arial | Cambria Math |
+| Cambria | 설치된 Cambria | Cambria Math |
+| Helvetica | 설치된 Helvetica (별도 설치 필요) | Cambria Math |
+| 직접 지정 | 사용자가 지정한 설치 글꼴 | 사용자가 지정한 OpenType 수학 글꼴 |
+
+일반 폰트 파일은 OS에 설치한 후 이름으로 선택합니다. 글꼴을 바꿀 때 확장을 다시 빌드할 필요가 없습니다. 굵게·이탤릭 글꼴은 펼침 메뉴에서 개별 지정할 수 있습니다. 빈 스타일 항목은 수학 글꼴의 해당 스타일을 사용합니다.
+
+**Times New Roman 등의 프리셋이 모든 기호를 그 폰트만으로 렌더링하는 것은 아닙니다.** 일반 폰트에는 수식에 필요한 글리프와 배치 정보가 모두 있지 않습니다. Symbol도 완전한 OpenType 수학 폰트가 아니므로 단독 프리셋으로 제공하지 않습니다. 지정한 폰트를 찾지 못하거나 필요한 글리프가 없으면 오류를 표시합니다.
+
+### Windows에서 로컬 글꼴 연결
+
+1. Node.js 22 이상과 MiKTeX 또는 TeX Live를 설치합니다.
+2. XeLaTeX, dvisvgm 및 LaTeX 패키지 standalone, amsmath, fontspec, unicode-math를 준비합니다. 렌더링 중 패키지 자동 설치는 하지 않습니다.
+3. 확장을 로드한 뒤, 확장 아이콘 → **로컬 글꼴 사용 준비**를 펼칩니다.
+4. 표시된 설치 명령을 레포 폴더에서 한 번 실행합니다. 예:
+
+~~~powershell
+powershell -ExecutionPolicy Bypass -File .\native\install.ps1 -ExtensionId <확장ID>
+~~~
+
+설치 스크립트는 현재 사용자에게만 Chrome·Edge·Brave Native Messaging 연결을 등록합니다. 관리자 권한은 필요하지 않습니다. 실행 파일이 PATH에 없다면 -NodePath, -XeLaTeXPath, -DvisvgmPath로 전체 경로를 지정할 수 있습니다. 새 확장 ID로 로드하거나 로컬 렌더러 코드를 업데이트했다면 설치 명령을 다시 실행하세요.
+
+이 연결은 HTTP 서버를 열지 않습니다. 확장 ID를 허용한 브라우저 연결로만 수식을 받아, 임시 폴더에서 XeLaTeX → XDV → dvisvgm SVG 변환 후 임시 파일을 정리합니다. 결과 SVG는 글자 윤곽을 포함하므로 다른 PC에서 원래 폰트를 설치하지 않아도 표시됩니다.
+
+제거:
+
+~~~powershell
+powershell -ExecutionPolicy Bypass -File .\native\uninstall.ps1
+~~~
+
+### 로컬 모드의 LaTeX 범위
+
+분수·근호·합·적분·그리스 문자·일반 AMS 수식·행렬·aligned 등을 지원합니다. 임의 TeX 프로그램 실행을 막기 위해 로컬 모드는 명령과 수식 환경을 제한합니다. \input, \include, \def, \newcommand, \usepackage, 주석 등은 지원하지 않으며 셸 실행은 비활성화됩니다. 기존 MathJax 모드의 문법은 유지됩니다.
+
+### 로컬 렌더러 검증
+
+~~~powershell
+npm run test:native
+$env:EVL_NATIVE_TEST = '1'
+npm run test:native
+~~~
+
+두 번째 실행은 XeLaTeX·dvisvgm 및 Times New Roman·Arial·Cambria·Cambria Math가 설치된 Windows PC에서 실제 SVG 생성과 없는 폰트의 실패 처리를 확인합니다.
+
+브라우저 검증은 빌드 후 로컬 연결을 등록한 상태에서 실행합니다. 테스트는 실제 사용하는 브라우저 프로필과 별도의 임시 프로필을 사용합니다.
+
+~~~powershell
+npm run test:smoke:fonts
+$env:EVL_NATIVE_FONT = 'Times New Roman'
+npm run test:smoke
+~~~
+
+설정창 개발 중에는 기본 dev 명령과 별도 터미널의 **npm run dev:ui**를 함께 실행하세요.
+
+구현은 src/popup.ts (폰트 설정·미리보기), src/background.ts (로컬 연결), src/latex/selected-renderer.ts (렌더러 선택), src/latex/svg.ts (공통 SVG 처리), native/ (호스트·설치 스크립트)로 분리되어 있습니다.
 
 ## 로컬 설치
 

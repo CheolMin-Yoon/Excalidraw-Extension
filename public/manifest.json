@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Excalidraw Vector LaTeX",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Turn $$...$$ into crisp, transparent vector LaTeX on Excalidraw.",
   "icons": {
     "16": "icons/icon-16.png",
@@ -11,9 +11,25 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://excalidraw.com/*"],
-      "js": ["content.js"],
+      "matches": [
+        "https://excalidraw.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
       "run_at": "document_idle"
     }
-  ]
+  ],
+  "permissions": [
+    "storage",
+    "nativeMessaging"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "LaTeX 글꼴"
+  }
 }

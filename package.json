@@ -1,6 +1,6 @@
 {
   "name": "excalidraw-vector-latex",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Render $$...$$ as transparent vector LaTeX in Excalidraw.",
   "license": "MIT",
@@ -9,7 +9,7 @@
     "node": ">=22 <25"
   },
   "scripts": {
-    "build": "npm run icons && vite build && node scripts/copy-third-party-licenses.mjs",
+    "build": "npm run icons && vite build && vite build --config vite.ui.config.ts && node scripts/copy-third-party-licenses.mjs",
     "dev": "vite build --watch",
     "icons": "node scripts/generate-icons.mjs",
     "lint": "eslint .",
@@ -17,7 +17,10 @@
     "test:smoke": "node scripts/smoke-extension.mjs",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
-    "verify": "npm run typecheck && npm run lint && npm run test && npm run build"
+    "verify": "npm run typecheck && npm run lint && npm run test && npm run test:native && npm run build",
+    "test:native": "node --test native/renderer.test.mjs",
+    "test:smoke:fonts": "node scripts/smoke-fonts.mjs",
+    "dev:ui": "vite build --config vite.ui.config.ts --watch"
   },
   "dependencies": {
     "@mathjax/src": "4.1.3"

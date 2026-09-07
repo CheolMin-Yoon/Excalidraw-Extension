@@ -7,7 +7,7 @@ import {
 } from "./excalidraw/bridge";
 import { parseLatexBlock } from "./latex/parser";
 import type { RenderedLatex } from "./latex/renderer";
-import { renderLatexToSvg } from "./latex/renderer";
+import { renderWithSelectedFont } from "./latex/selected-renderer";
 import { showErrorNotice } from "./ui/notice";
 
 interface EditorState {
@@ -15,6 +15,7 @@ interface EditorState {
   renderPromise: Promise<RenderedLatex>;
   rendered?: RenderedLatex;
   prepared?: RenderedLatex;
+  finishing?: boolean;
 }
 
 export interface ControllerDependencies {
@@ -26,7 +27,7 @@ export interface ControllerDependencies {
 }
 
 const defaultDependencies: ControllerDependencies = {
-  render: renderLatexToSvg,
+  render: renderWithSelectedFont,
   paste: dispatchSvgPaste,
   clear: clearTextEditor,
   notifyError: showErrorNotice,
@@ -191,6 +192,8 @@ export class LatexConversionController {
     state: EditorState,
     pointerEventWasBlocked: boolean,
   ): Promise<void> {
+    if (state.finishing) return;
+    state.finishing = true;
     try {
       const rendered = await state.renderPromise;
       if (!editor.isConnected || editor.value !== state.value || this.states.get(editor) !== state) {
@@ -201,6 +204,8 @@ export class LatexConversionController {
       this.replayBlur(editor);
       this.dependencies.afterSubmit(() => this.safePaste(rendered));
     } catch (error) {
+      if (this.states.get(editor) !== state || editor.value !== state.value) return;
+      this.states.delete(editor);
       this.dependencies.notifyError(errorMessage(error), this.documentRef);
       if (editor.isConnected) {
         this.replayBlur(editor);
@@ -208,6 +213,8 @@ export class LatexConversionController {
           editor.focus({ preventScroll: true });
         }
       }
+    } finally {
+      state.finishing = false;
     }
   }
 

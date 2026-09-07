@@ -19,7 +19,7 @@ describe("extension manifest", () => {
     const manifest = JSON.parse(await readFile(manifestPath, "utf8")) as ExtensionManifest;
 
     expect(manifest.manifest_version).toBe(3);
-    expect(manifest.permissions).toBeUndefined();
+    expect(manifest.permissions).toEqual(["storage", "nativeMessaging"]);
     expect(manifest.host_permissions).toBeUndefined();
     expect(manifest.content_scripts).toEqual([
       {

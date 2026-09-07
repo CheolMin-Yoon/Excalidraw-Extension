@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LaTeX 글꼴</title>
+  </head>
+  <body>
+    <main>
+      <h1>LaTeX 글꼴</h1>
+      <p>새로 만드는 수식에 적용됩니다. 기존 이미지는 유지됩니다.</p>
+      <form id="settings">
+        <label for="preset">글꼴 프리셋</label>
+        <select id="preset">
+          <option value="mathjax">New Computer Modern · 기본</option>
+          <option value="Cambria">Cambria + Cambria Math</option>
+          <option value="Times New Roman">Times New Roman + Cambria Math</option>
+          <option value="Arial">Arial + Cambria Math</option>
+          <option value="Helvetica">Helvetica + Cambria Math · 설치 필요</option>
+          <option value="custom">직접 지정</option>
+        </select>
+        <fieldset id="native-fields" hidden>
+          <legend>PC에 설치된 글꼴</legend>
+          <label for="textFont">문자·숫자 글꼴</label>
+          <input id="textFont" maxlength="100" placeholder="Times New Roman" />
+          <label for="mathFont">수식 기호 글꼴</label>
+          <input id="mathFont" maxlength="100" placeholder="Cambria Math" />
+          <details>
+            <summary>이탤릭·굵은 글꼴 지정</summary>
+            <p>빈 항목은 수식 기호 글꼴의 해당 스타일을 사용합니다.</p>
+            <label for="italicFont">이탤릭</label><input id="italicFont" maxlength="100" />
+            <label for="boldFont">굵게</label><input id="boldFont" maxlength="100" />
+            <label for="boldItalicFont">굵은 이탤릭</label><input id="boldItalicFont" maxlength="100" />
+          </details>
+          <p>일반 글꼴은 영문·숫자·텍스트에 적용됩니다. 그리스 문자·적분·큰 괄호 등은 수식 기호 글꼴을 사용합니다. Symbol은 완전한 수학 글꼴이 아니므로 단독 프리셋으로 제공하지 않습니다.</p>
+        </fieldset>
+        <label for="sample">미리보기 수식 (LaTeX)</label>
+        <textarea id="sample" rows="2">\frac{x^2+1}{2}+\sum_{i=1}^{n}\alpha_i</textarea>
+        <div class="buttons"><button type="button" id="preview-button">미리보기</button><button type="submit">저장</button></div>
+      </form>
+      <p id="status" role="status" aria-live="polite"></p>
+      <img id="preview" alt="선택한 글꼴의 수식 미리보기" hidden />
+      <details id="setup">
+        <summary>로컬 글꼴 사용 준비 (Windows)</summary>
+        <p>기본 글꼴 외에는 XeLaTeX·dvisvgm과 로컬 연결 도구가 필요합니다. 처음 한 번, 레포 폴더에서 아래 명령을 실행하세요.</p>
+        <code id="install-command"></code>
+        <p>Node.js 22 이상과 MiKTeX 또는 TeX Live가 필요합니다. 자세한 설치·제거 방법은 레포의 README를 참고하세요.</p>
+      </details>
+    </main>
+    <script type="module" src="/src/popup.ts"></script>
+  </body>
+</html>
