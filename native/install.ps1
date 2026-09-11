@@ -20,6 +20,18 @@ $nodeVersion = & $resolvedNode --version
 if ([int]($nodeVersion.TrimStart('v').Split('.')[0]) -lt 22) { throw 'Node.js 22 or newer is required.' }
 $installDirectory = Join-Path $env:LOCALAPPDATA 'ExcalidrawVectorLatex'
 New-Item -ItemType Directory -Path $installDirectory -Force | Out-Null
+$launcher = Join-Path $installDirectory 'host.exe'
+$pidPath = Join-Path $installDirectory 'server.pid'
+if (Test-Path -LiteralPath $pidPath) {
+  $serverPid = [int](Get-Content -LiteralPath $pidPath -Raw)
+  $serverProcess = Get-CimInstance Win32_Process -Filter "ProcessId=$serverPid" -ErrorAction SilentlyContinue
+  if ($serverProcess -and $serverProcess.CommandLine -like "*$installDirectory*server.mjs*") {
+    Stop-Process -Id $serverPid -Force
+  }
+}
+Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
+  Where-Object { $_.ExecutablePath -eq $launcher -and $_.CommandLine -like '*--server*' } |
+  ForEach-Object { Stop-Process -Id $_.ProcessId -Force }
 foreach ($file in @('host.mjs', 'server.mjs', 'renderer.mjs', 'launcher.cs')) {
   Copy-Item -LiteralPath (Join-Path $PSScriptRoot $file) -Destination (Join-Path $installDirectory $file)
 }
@@ -35,7 +47,6 @@ $config = @{ xelatex = $resolvedXeLaTeX; dvisvgm = $resolvedDvisvgm; allowedOrig
 [IO.File]::WriteAllText((Join-Path $installDirectory 'config.json'), $config, $utf8)
 $nodePathFile = Join-Path $installDirectory 'node-path.txt'
 [IO.File]::WriteAllText($nodePathFile, $resolvedNode, $utf8)
-$launcher = Join-Path $installDirectory 'host.exe'
 if (Test-Path -LiteralPath $launcher) { Remove-Item -LiteralPath $launcher -Force }
 $compiler = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
 if (-not (Test-Path -LiteralPath $compiler)) {
@@ -57,14 +68,6 @@ foreach ($browser in @('Google\Chrome', 'Microsoft\Edge', 'BraveSoftware\Brave-B
   $registryPath = "HKCU:\Software\$browser\NativeMessagingHosts\com.excalidraw.vector_latex"
   New-Item -Path $registryPath -Force | Out-Null
   Set-Item -LiteralPath $registryPath -Value $manifestPath
-}
-$pidPath = Join-Path $installDirectory 'server.pid'
-if (Test-Path -LiteralPath $pidPath) {
-  $serverPid = [int](Get-Content -LiteralPath $pidPath -Raw)
-  $serverProcess = Get-CimInstance Win32_Process -Filter "ProcessId=$serverPid" -ErrorAction SilentlyContinue
-  if ($serverProcess -and $serverProcess.CommandLine -like "*$installDirectory*server.mjs*") {
-    Stop-Process -Id $serverPid -Force
-  }
 }
 $runKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run'
 $runCommand = '"{0}" --server' -f $launcher

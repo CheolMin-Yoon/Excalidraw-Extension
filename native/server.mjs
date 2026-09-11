@@ -7,7 +7,10 @@ import { renderNative } from "./renderer.mjs";
 
 const directory = dirname(fileURLToPath(import.meta.url));
 const config = JSON.parse(await readFile(resolve(directory, "config.json"), "utf8"));
-const allowedOrigins = new Set(config.allowedOrigins ?? []);
+const normalizeOrigin = (origin) => origin.replace(/\/$/u, "");
+const allowedOrigins = new Set(
+  (config.allowedOrigins ?? []).map(normalizeOrigin),
+);
 
 function send(response, status, value, origin = "") {
   const body = JSON.stringify(value);
@@ -20,7 +23,7 @@ function send(response, status, value, origin = "") {
 }
 
 const server = createServer((request, response) => {
-  const origin = request.headers.origin ?? "";
+  const origin = normalizeOrigin(request.headers.origin ?? "");
   const remote = request.socket.remoteAddress ?? "";
   if (!["127.0.0.1", "::1", "::ffff:127.0.0.1"].includes(remote)) {
     send(response, 403, { ok: false, error: "Loopback connections only." });
