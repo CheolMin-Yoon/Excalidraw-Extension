@@ -20,7 +20,7 @@ describe("extension manifest", () => {
 
     expect(manifest.manifest_version).toBe(3);
     expect(manifest.permissions).toEqual(["storage", "nativeMessaging"]);
-    expect(manifest.host_permissions).toBeUndefined();
+    expect(manifest.host_permissions).toEqual(["http://127.0.0.1:18743/*"]);
     expect(manifest.content_scripts).toEqual([
       {
         matches: ["https://excalidraw.com/*"],

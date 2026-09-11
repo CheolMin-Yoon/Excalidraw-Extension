@@ -61,6 +61,8 @@ powershell -ExecutionPolicy Bypass -File .\native\install.ps1 -ExtensionId <확�
 
 이 연결은 HTTP 서버를 열지 않습니다. 확장 ID를 허용한 브라우저 연결로만 수식을 받아, 임시 폴더에서 XeLaTeX → XDV → dvisvgm SVG 변환 후 임시 파일을 정리합니다. 결과 SVG는 글자 윤곽을 포함하므로 다른 PC에서 원래 폰트를 설치하지 않아도 표시됩니다.
 
+Native Messaging을 찾지 못하는 Chrome 버전에서는 설치 스크립트가 등록한 `127.0.0.1:18743` 보조 연결을 자동으로 사용합니다. 이 연결은 외부 네트워크에 바인딩하지 않고, 설치 시 등록한 확장 ID의 요청만 허용합니다. Windows 로그인 시 자동으로 시작됩니다.
+
 제거:
 
 ~~~powershell

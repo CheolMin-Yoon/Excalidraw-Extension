@@ -1,4 +1,14 @@
 $ErrorActionPreference = 'Stop'
+$runKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run'
+Remove-ItemProperty -Path $runKey -Name 'ExcalidrawVectorLatex' -ErrorAction SilentlyContinue
+$pidPath = Join-Path $env:LOCALAPPDATA 'ExcalidrawVectorLatex\server.pid'
+if (Test-Path -LiteralPath $pidPath) {
+  $serverPid = [int](Get-Content -LiteralPath $pidPath -Raw)
+  $serverProcess = Get-CimInstance Win32_Process -Filter "ProcessId=$serverPid" -ErrorAction SilentlyContinue
+  if ($serverProcess -and $serverProcess.CommandLine -like '*ExcalidrawVectorLatex*server.mjs*') {
+    Stop-Process -Id $serverPid -Force
+  }
+}
 foreach ($browser in @('Google\Chrome', 'Microsoft\Edge', 'BraveSoftware\Brave-Browser')) {
   $registryPath = "HKCU:\Software\$browser\NativeMessagingHosts\com.excalidraw.vector_latex"
   if (Test-Path -LiteralPath $registryPath) { Remove-Item -LiteralPath $registryPath }

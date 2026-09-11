@@ -1,6 +1,27 @@
 import { normalizeSettings } from "./settings";
 
 const HOST = "com.excalidraw.vector_latex";
+const LOCAL_RENDERER = "http://127.0.0.1:18743/render";
+
+async function renderThroughLocalServer(request: Record<string, unknown>): Promise<unknown> {
+  const response = await fetch(LOCAL_RENDERER, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      type: "render",
+      latex: request.latex,
+      settings: normalizeSettings(request.settings),
+    }),
+  });
+  const result = await response.json() as unknown;
+  if (!response.ok) {
+    const message = result && typeof result === "object" && "error" in result
+      ? String((result as { error: unknown }).error)
+      : `HTTP ${response.status}`;
+    throw new Error(message);
+  }
+  return result;
+}
 chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) => {
   if (sender.id !== chrome.runtime.id || !sender.url) return false;
   const source = new URL(sender.url);
@@ -18,10 +39,17 @@ chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) =>
     type: "render", latex: request.latex, settings: normalizeSettings(request.settings),
   }, (response: unknown) => {
     const error = chrome.runtime.lastError;
-    sendResponse(error ? {
-      ok: false,
-      error: "로컬 렌더러에 연결하지 못했습니다. 확장 설정의 설치 안내를 확인하세요. " + error.message,
-    } : response);
+    if (!error) {
+      sendResponse(response);
+      return;
+    }
+    void renderThroughLocalServer(request).then(sendResponse, (fallbackError: unknown) => {
+      const message = fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
+      sendResponse({
+        ok: false,
+        error: "로컬 렌더러에 연결하지 못했습니다. 설치 스크립트를 다시 실행하세요. " + message,
+      });
+    });
   });
   return true;
 });

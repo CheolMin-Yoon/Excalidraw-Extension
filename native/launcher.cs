@@ -17,25 +17,31 @@ internal static class Program
         return buffer;
     }
 
-    public static int Main()
+    public static int Main(string[] args)
     {
         try
         {
             string directory = AppDomain.CurrentDomain.BaseDirectory;
             string nodePath = File.ReadAllText(Path.Combine(directory, "node-path.txt")).Trim();
-            string hostPath = Path.Combine(directory, "host.mjs");
+            bool serverMode = args.Length > 0 && args[0] == "--server";
+            string hostPath = Path.Combine(directory, serverMode ? "server.mjs" : "host.mjs");
             var startInfo = new ProcessStartInfo
             {
                 FileName = nodePath,
                 Arguments = "\"" + hostPath.Replace("\"", "\\\"") + "\"",
                 UseShellExecute = false,
                 CreateNoWindow = true,
-                RedirectStandardInput = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
+                RedirectStandardInput = !serverMode,
+                RedirectStandardOutput = !serverMode,
+                RedirectStandardError = !serverMode,
             };
             using (Process process = Process.Start(startInfo))
             {
+                if (serverMode)
+                {
+                    process.WaitForExit();
+                    return process.ExitCode;
+                }
                 process.BeginErrorReadLine();
                 Stream input = Console.OpenStandardInput();
                 byte[] header = ReadExactly(input, 4);
