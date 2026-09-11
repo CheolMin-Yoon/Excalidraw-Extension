@@ -57,6 +57,8 @@ powershell -ExecutionPolicy Bypass -File .\native\install.ps1 -ExtensionId <확�
 
 설치 스크립트는 현재 사용자에게만 Chrome·Edge·Brave Native Messaging 연결을 등록합니다. 관리자 권한은 필요하지 않습니다. 실행 파일이 PATH에 없다면 -NodePath, -XeLaTeXPath, -DvisvgmPath로 전체 경로를 지정할 수 있습니다. 새 확장 ID로 로드하거나 로컬 렌더러 코드를 업데이트했다면 설치 명령을 다시 실행하세요.
 
+`Specified native messaging host not found` 오류가 나타나면 최신 install.ps1을 같은 확장 ID로 다시 실행하세요. 설치 스크립트는 최신 Chrome이 직접 실행할 수 있는 host.exe를 만들고 등록합니다.
+
 이 연결은 HTTP 서버를 열지 않습니다. 확장 ID를 허용한 브라우저 연결로만 수식을 받아, 임시 폴더에서 XeLaTeX → XDV → dvisvgm SVG 변환 후 임시 파일을 정리합니다. 결과 SVG는 글자 윤곽을 포함하므로 다른 PC에서 원래 폰트를 설치하지 않아도 표시됩니다.
 
 제거:

@@ -20,19 +20,24 @@ $nodeVersion = & $resolvedNode --version
 if ([int]($nodeVersion.TrimStart('v').Split('.')[0]) -lt 22) { throw 'Node.js 22 or newer is required.' }
 $installDirectory = Join-Path $env:LOCALAPPDATA 'ExcalidrawVectorLatex'
 New-Item -ItemType Directory -Path $installDirectory -Force | Out-Null
-foreach ($file in @('host.mjs', 'renderer.mjs')) {
+foreach ($file in @('host.mjs', 'renderer.mjs', 'launcher.cs')) {
   Copy-Item -LiteralPath (Join-Path $PSScriptRoot $file) -Destination (Join-Path $installDirectory $file)
 }
 $utf8 = New-Object System.Text.UTF8Encoding($false)
 $config = @{ xelatex = $resolvedXeLaTeX; dvisvgm = $resolvedDvisvgm } | ConvertTo-Json
 [IO.File]::WriteAllText((Join-Path $installDirectory 'config.json'), $config, $utf8)
-$launcher = Join-Path $installDirectory 'host.cmd'
-# CMD expands percent signs even inside quotes.
-foreach ($path in @($resolvedNode, $installDirectory)) {
-  if ($path -match '[%"!\r\n]') { throw 'Native host paths cannot contain %, !, quotes, or newlines.' }
+$nodePathFile = Join-Path $installDirectory 'node-path.txt'
+[IO.File]::WriteAllText($nodePathFile, $resolvedNode, $utf8)
+$launcher = Join-Path $installDirectory 'host.exe'
+if (Test-Path -LiteralPath $launcher) { Remove-Item -LiteralPath $launcher -Force }
+$compiler = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
+if (-not (Test-Path -LiteralPath $compiler)) {
+  $compiler = Join-Path $env:WINDIR 'Microsoft.NET\Framework\v4.0.30319\csc.exe'
 }
-$launcherText = '@echo off' + [Environment]::NewLine + ('"{0}" "{1}"' -f $resolvedNode, (Join-Path $installDirectory 'host.mjs')) + [Environment]::NewLine
-[IO.File]::WriteAllText($launcher, $launcherText, $utf8)
+if (-not (Test-Path -LiteralPath $compiler)) { throw 'Windows C# compiler was not found.' }
+& $compiler /nologo /target:exe "/out:$launcher" (Join-Path $installDirectory 'launcher.cs')
+if ($LASTEXITCODE -ne 0) { throw 'Failed to compile native host launcher.' }
+if (-not (Test-Path -LiteralPath $launcher)) { throw 'Failed to build native host launcher.' }
 $manifestPath = Join-Path $installDirectory 'com.excalidraw.vector_latex.json'
 $origins = @("chrome-extension://$ExtensionId/")
 if (Test-Path -LiteralPath $manifestPath) {
