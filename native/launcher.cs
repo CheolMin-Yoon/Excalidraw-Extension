@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Threading;
 
 internal static class Program
 {
@@ -35,13 +36,19 @@ internal static class Program
                 RedirectStandardOutput = !serverMode,
                 RedirectStandardError = !serverMode,
             };
+            if (serverMode)
+            {
+                while (true)
+                {
+                    using (Process process = Process.Start(startInfo))
+                    {
+                        process.WaitForExit();
+                    }
+                    Thread.Sleep(1000);
+                }
+            }
             using (Process process = Process.Start(startInfo))
             {
-                if (serverMode)
-                {
-                    process.WaitForExit();
-                    return process.ExitCode;
-                }
                 process.BeginErrorReadLine();
                 Stream input = Console.OpenStandardInput();
                 byte[] header = ReadExactly(input, 4);

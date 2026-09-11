@@ -8,7 +8,13 @@ const settings = {
   boldFont: "Times New Roman Bold", boldItalicFont: "Times New Roman Bold Italic",
 };
 test("accepts common equations and matrix environments", () => {
-  for (const latex of ["\\frac{x^2}{2}+\\alpha", "\\begin{bmatrix}1&2\\\\3&4\\end{bmatrix}", "\\text{rate}\\leq 5\\%"]) {
+  for (const latex of [
+    "\\frac{x^2}{2}+\\alpha",
+    "\\begin{bmatrix}1&2\\\\3&4\\end{bmatrix}",
+    "\\text{rate}\\leq 5\\%",
+    "{\\LARGE\\textbf{Filtered grasps}}",
+    "{\\fontsize{36}{43.2}\\selectfont\\textbf{Filtered grasps}}",
+  ]) {
     assert.equal(validateLatex(latex), latex);
   }
 });

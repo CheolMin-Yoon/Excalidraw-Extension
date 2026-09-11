@@ -30,6 +30,7 @@ const COMMANDS = new Set((
   "text textrm textsf texttt textnormal textbf textit emph operatorname " +
   "mathrm mathit mathbf mathsf mathtt mathnormal mathcal mathbb mathfrak boldsymbol " +
   "symup symit symbf symbfup symbfit symcal symbb symfrak " +
+  "tiny scriptsize footnotesize small normalsize large Large LARGE huge Huge fontsize selectfont " +
   "displaystyle textstyle scriptstyle scriptscriptstyle limits nolimits " +
   "quad qquad thinspace medspace thickspace negthinspace substack " +
   "begin end hline cline multicolumn hdotsfor nonumber notag tag"
